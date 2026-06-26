@@ -1,0 +1,8 @@
+{
+  "name": "onecodex",
+  "version": "0.1.0",
+  "description": "One Codex skills: workflow authoring and Python client quick reference",
+  "author": { "name": "One Codex", "url": "https://onecodex.com" },
+  "license": "MIT",
+  "skills": "./skills/"
+}

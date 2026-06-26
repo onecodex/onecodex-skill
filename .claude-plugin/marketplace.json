@@ -1,0 +1,7 @@
+{
+  "name": "onecodex",
+  "owner": { "name": "One Codex" },
+  "plugins": [
+    { "source": "./plugins/onecodex", "name": "onecodex" }
+  ]
+}

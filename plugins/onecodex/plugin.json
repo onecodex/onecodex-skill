@@ -1,0 +1,9 @@
+{
+  "name": "onecodex",
+  "version": "0.1.0",
+  "description": "One Codex skills: workflow authoring and Python client quick reference",
+  "author": { "name": "One Codex", "url": "https://onecodex.com" },
+  "repository": "https://github.com/onecodex/onecodex-skill",
+  "license": "MIT",
+  "keywords": ["bioinformatics", "onecodex", "metagenomics"]
+}

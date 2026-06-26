@@ -1,0 +1,1 @@
+../plugins/onecodex/skills/onecodex/SKILL.md

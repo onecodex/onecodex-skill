@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rumdl-fmt
+        name: rumdl fmt
+        entry: rumdl fmt
+        language: system
+        types: [markdown]
+      - id: rumdl-check
+        name: rumdl check
+        entry: rumdl check
+        language: system
+        types: [markdown]
