@@ -184,7 +184,7 @@ A workflow on OCX runs **once per sample**. The user picks a sample in the UI (o
 
 ### `shell_script` vs `nextflow`
 
-Pick `shell_script` when you can express the work as one bash script that takes one sample. You control the container, the deps, the runtime shape entirely. Required at create time: `--cpu`, `--ram-gb`, `--storage-gb`.
+Pick `shell_script` when you can express the work as one bash script that takes one sample. You control the container, the deps, the runtime shape entirely. Required at create time: `--cpu`, `--ram-gb`, `--storage-gb`. Optional: `--repository-url`/`--repository-tag` to clone a git repo alongside the script (cloned into CWD; path in `$REPOSITORY_DIR`) — useful for shipping helper files (notebooks, configs, templates) versioned with the script.
 
 Pick `nextflow` when you want to run an existing Nextflow pipeline (e.g. `nf-core/<x>`) and let its modules handle per-process containers, resource labels, and parallelism. OCX provides Nextflow + Docker-in-Docker in a pinned orchestrator image; you write a thin entrypoint that builds a samplesheet for one sample and calls `nextflow run`. Per-process resources are set by the pipeline, not by the Job — you cannot pass `--cpu`/`--ram-gb`/`--storage-gb`.
 
@@ -229,7 +229,7 @@ A `make publish` (or equivalent) wrapping step 6 makes the inner loop one comman
 
 | Variable | What it is |
 |---|---|
-| `OCX_SAMPLE_FILENAME` | Filename of the sample. CWD = `/out` for nextflow; CWD contains the sample for shell_script. Read this, not `$1`. |
+| `OCX_SAMPLE_FILENAME` | Filename of the sample. CWD = `/out` (both job types); the staged sample is at `./$OCX_SAMPLE_FILENAME`. Read this env var, not `$1`. |
 | `OCX_SAMPLE_NAME` | Human-readable sample name. |
 | `OCX_SAMPLE_UUID` | Sample ID. |
 | `OCX_ANALYSIS_UUID` | This run's analysis ID. Use in output dir names. |
@@ -242,10 +242,9 @@ A `make publish` (or equivalent) wrapping step 6 makes the inner loop one comman
 
 | Path | What's there |
 |---|---|
-| CWD (shell_script) | The staged sample file. Write outputs here; everything gets captured. |
-| `/out/` (nextflow) | CWD. Staged sample, generated `input_params.json`, `script.sh` (your entrypoint), `.aws/`, `.nextflow/`. |
+| `/out/` (CWD, both job types) | The staged sample, generated `input_params.json`, `script.sh` (your entrypoint), orbiter runtime metadata. Write outputs here for shell_script (everything gets captured). |
 | `output-$OCX_ANALYSIS_UUID/` (nextflow) | Where you must write outputs. Anything matching `output*` is captured. |
-| `$REPOSITORY_DIR` (nextflow only) | The cloned pipeline git repo. |
+| `$REPOSITORY_DIR` (both job types, if `--repository-url` set) | The cloned git repo. **Relative path** under CWD (e.g. `Hello-World`), not absolute. For nextflow this is the pipeline; for shell_script it's whatever helper files you want versioned with the script. |
 | `/share/asset_<UUID>/<filename>` | Mounted assets. See [Assets](#assets). |
 | `/share/asset_<UUID>/` | Auto-extracted contents of `.tar.gz` assets. |
 | `./results.json` (CWD) | If present after the run, surfaced via the `/results` API endpoint without a download. |
@@ -288,6 +287,36 @@ At run time, the parent's output files appear under `/out/parent_out/…` in the
 #### Inspecting at runtime
 
 `OCX_DEPENDENCY_UUIDS` is a space-separated list of parent analysis UUIDs that were staged. Useful for verifying a specific parent was used, or fetching extra metadata via `ocx.Analyses.get(uuid)`.
+
+### Git repositories
+
+Attach a git repo with `--repository-url <HTTPS_URL>` (optional `--repository-tag <annotated-tag>`; omit to track the default branch HEAD). Works for both `shell_script` and `nextflow` jobs — required for Nextflow, useful for shell_script when you want notebooks, config, or auxiliary scripts versioned alongside the workflow.
+
+On every run, OCX clones the repo into CWD; the directory name is in `$REPOSITORY_DIR` (relative, e.g. `myrepo`). For shell_script, the common shape is a tiny "shim" script as the job's `--script` that `exec`s the real entrypoint from the repo:
+
+```bash
+#!/bin/bash
+exec bash "$REPOSITORY_DIR/jobscript.sh"
+```
+
+After that, every workflow change is one `git push` away — no `jobs update`.
+
+#### Private repos: GitHub integration
+
+Cloning private repos needs OCX to be connected to GitHub. Set this up at <https://app.onecodex.com/settings> → **GitHub Integration**:
+
+- **OCX GitHub App** (org-wide, recommended): an org owner/admin installs the app once on behalf of all members. If installed, this takes precedence and per-user PATs are disabled.
+- **Personal Access Token** (per-user): each user supplies their own.
+
+For the PAT route, the minimum fine-grained permissions are:
+
+- **Repository access**: the specific private repo(s) to attach to jobs (not "all repos")
+- **Repository permissions → Contents: Read-only**
+- (Metadata: Read-only is auto-granted as a dependency)
+
+That's all OCX needs — it clones, never pushes. For a classic PAT, `repo` scope works but is overprivileged; prefer fine-grained.
+
+Common gotcha: a newly-created private repo isn't automatically covered by an existing fine-grained PAT. Edit the PAT in GitHub settings and add the new repo to its allowlist, otherwise `jobs create`/`update` fails with `ERROR: Unable to access repository`.
 
 ### Assets
 
@@ -374,6 +403,7 @@ Drop the sample into `./out/` first. Flip `OCX_IS_LONG_READ` to exercise both br
 - **Empty `logs()` + "We were unable to process this file."** in ~30–90 seconds = entrypoint crashed before its first stdout flush. Almost always `set -e` + a non-existent path or failed `ls`/glob. Add diagnostic `ls -la` at the top and use `shopt -s nullglob` for globs.
 - **403 on `Jobs.run`** = you don't own the sample. You can only run Jobs against samples you own.
 - **Jobs aren't deletable** via API (HTTP 405). Rename stale ones: `job.update(name="…-DELETED")`.
+- **`ERROR: Unable to access repository`** on `jobs create`/`update` with `--repository-url` set = OCX can't clone the repo. Either (a) no GitHub integration configured for the user/org (see [Git repositories](#git-repositories)), or (b) a fine-grained PAT is installed but the target repo isn't on its allowlist (newly-created repos aren't auto-included — edit the PAT to add it).
 
 #### `shell_script`-specific
 
