@@ -264,6 +264,7 @@ A `make publish` (or equivalent) wrapping step 6 makes the inner loop one comman
 | `OCX_INSTRUMENT_VENDOR` | Detected platform (`Illumina`, `Oxford Nanopore`, `PacBio`, …) or empty. |
 | `OCX_IS_LONG_READ` | `"true"`/`"false"` — falls back to `"false"` if vendor unknown. |
 | `OCX_DEPENDENCY_UUIDS` | Space-separated UUIDs for analyses staged as dependencies. |
+| `ONE_CODEX_BEARER_TOKEN` | Short-lived auth token for calling the OCX API from inside the run. **Opt-in, absent by default** — see [Calling the OCX API from inside a run](#calling-the-ocx-api-from-inside-a-run). |
 | `$ARGS_<KEY>` | One per entry in the Job's `arguments_schema`, value from the per-run `job_args`. |
 
 #### Filesystem layout
@@ -291,6 +292,22 @@ deinterleave "$OCX_SAMPLE_FILENAME" reads_R1.fastq.gz reads_R2.fastq.gz
 ```
 
 Then reference those files in your `input.csv` / samplesheet. Long-read samples are not interleaved — gate on `$OCX_IS_LONG_READ`.
+
+#### Calling the OCX API from inside a run
+
+Most of what a workflow needs is injected (env vars, args, assets, dependency outputs). When you need more — e.g. sample `metadata` the platform doesn't stage — call the API with the **bearer token** the runtime can inject:
+
+- **Opt in per Job.** Check *"Include temporary authentication key in `ONE_CODEX_BEARER_TOKEN` environment variable"* when creating/editing the workflow. Unchecked by default, so the env var is **absent unless you enable it**.
+- **It's picked up automatically.** `Api()` reads `ONE_CODEX_BEARER_TOKEN` from the environment with no extra wiring (same precedence slot as `ONE_CODEX_API_KEY`); or pass it explicitly. The CLI honors it in place of `ONE_CODEX_API_KEY` too.
+
+  ```python
+  import os, onecodex
+  ocx = onecodex.Api()                       # finds $ONE_CODEX_BEARER_TOKEN
+  sample = ocx.Samples.get(os.environ["OCX_SAMPLE_UUID"])
+  meta = sample.metadata                      # the kind of thing not auto-staged
+  ```
+
+- **Treat it like the API key.** It's short-lived (expires after the run window) but grants **full per-user scope** — every sample you own or that's shared with you, plus metadata and analyses. **Never `echo` it, write it to an output file, or bake it into `results.json`** — the expiry has to outlast a long run, so a leaked token in shared results is a real exposure window. Scope your calls to the sample at hand rather than enumerating everything.
 
 ### Dependencies
 
