@@ -24,6 +24,8 @@ pip install 'onecodex[all]'   # + altair, pandas, scikit-bio, etc. (for analysis
 onecodex login                # one-time; stores API key in ~/.onecodex
 ```
 
+Prebuilt Docker image with the client + `all` and `reports` extras installed (based on `python:3.13-slim-bullseye`): `quay.io/refgenomics/docker-onecodex-notebook`. Use it instead of building your own when you need a ready-to-run env for notebooks, scripts, or `shell_script` Jobs that just call the client.
+
 Source: <https://github.com/onecodex/onecodex>. Auth via `onecodex login`, env var `ONE_CODEX_API_KEY`, or `Api(api_key=…)`.
 
 ```python
