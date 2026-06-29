@@ -91,6 +91,32 @@ ocx.Samples.create("s.fastq.gz", metadata={...})
 ocx.Samples.create_paired("R1.fastq.gz", "R2.fastq.gz", metadata={...})
 ```
 
+### CLI-only utilities
+
+These CLI commands have no Python-client equivalent. (Job/analysis CLI commands are in [Workflows](#cli-commands).)
+
+```bash
+onecodex download samples OUTDIR [--project … | -t TAG | -s SAMPLE_ID …]   # bulk FASTX download
+onecodex documents {list,download,upload}                                  # Document Portal
+```
+
+`onecodex scripts`:
+
+```bash
+# Extract reads assigned to a taxon from a classification (host removal, taxon pull-out, etc.)
+onecodex scripts subset_reads <CLASSIFICATION_ID> reads.fastq.gz -t 562 -o ecoli.fastq.gz
+#   -t TAX_ID (repeatable, required) · --with-children (incl. strains) · --exclude-reads (keep non-matching)
+#   -r R2.fastq.gz (paired) · --include-lowconf · default skips low-confidence assignments
+
+# Interleave paired FASTQs (counterpart to the workflow `deinterleave`); streams to stdout w/o OUTPUT arg
+onecodex scripts interleave R1.fastq.gz R2.fastq.gz out.fastq.gz --gzip   # inputs must be sorted
+
+# Bulk functional-profile export to one CSV (long default; --table-format wide)
+onecodex scripts export_functional_metric -a ko -m cpm -o out.csv {-p PROJECT | -s ID,ID,…}
+#   -a: reaction|ec|metacyc|ko|pathways|eggnog|pfam|go
+#   -m: completeabundance|coverage|abundance (pathways) · rpk|cpm (other annotations)
+```
+
 ### Enums
 
 All live in `onecodex.lib.enums`, are `str` subclasses, and have rich docstrings — inspect them for the full set. Highlights:
