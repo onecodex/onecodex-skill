@@ -297,7 +297,7 @@ Then reference those files in your `input.csv` / samplesheet. Long-read samples 
 
 Most of what a workflow needs is injected (env vars, args, assets, dependency outputs). When you need more — e.g. sample `metadata` the platform doesn't stage — call the API with the **bearer token** the runtime can inject:
 
-- **Opt in per Job.** Check *"Include temporary authentication key in `ONE_CODEX_BEARER_TOKEN` environment variable"* when creating/editing the workflow. Unchecked by default, so the env var is **absent unless you enable it**.
+- **Opt in per Job.** Pass `--inject-bearer-token` to `onecodex jobs create`/`jobs update` (or check *"Include temporary authentication key in `ONE_CODEX_BEARER_TOKEN` environment variable"* in the UI). Off by default (`--no-inject-bearer-token`), so the env var is **absent unless you enable it**.
 - **It's picked up automatically.** `Api()` reads `ONE_CODEX_BEARER_TOKEN` from the environment with no extra wiring (same precedence slot as `ONE_CODEX_API_KEY`); or pass it explicitly. The CLI honors it in place of `ONE_CODEX_API_KEY` too.
 
   ```python
