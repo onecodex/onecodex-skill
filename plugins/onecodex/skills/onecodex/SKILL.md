@@ -421,7 +421,7 @@ Many tools/pipelines support downloading their DB on first run. For prototyping,
 
 - **Smoke-test locally first** with the same image and env vars (see [Local iteration](#local-iteration)). Iterating against the OCX runner adds minutes per round trip.
 - **Cache the Job ID on create.** `Jobs.where(name=…)` doesn't find draft Jobs (see [Gotchas](#gotchas)). Persist to `.job_id` and use `Jobs.get(id)`.
-- **Publish only when settled.** Drafts (the default) are fully runnable and freely mutable. Publishing (`POST /api/v2/jobs/<id>/ publish`) makes the Job visible in the org dropdowns but locks most fields and requires `repository.tag` to be a real git tag — so do it last, not first.
+- **Publish only when settled.** Drafts (the default) are fully runnable and freely mutable. Publishing makes the Job visible in the org dropdowns but locks most fields and requires `repository.tag` to be a real git tag — so do it last, not first.
 - **Keep `arguments_schema` curated.** It's a UI affordance, not the param surface. Don't restate every upstream pipeline param; expose only what users should control. Required upstream params (`input`, `outdir`) are handled by the entrypoint.
 
 ### Local iteration
