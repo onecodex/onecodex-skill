@@ -263,6 +263,7 @@ A `make publish` (or equivalent) wrapping step 6 makes the inner loop one comman
 | `OCX_ANALYSIS_UUID` | This run's analysis ID. Use in output dir names. |
 | `OCX_INSTRUMENT_VENDOR` | Detected platform (`Illumina`, `Oxford Nanopore`, `PacBio`, …) or empty. |
 | `OCX_IS_LONG_READ` | `"true"`/`"false"` — falls back to `"false"` if vendor unknown. |
+| `OCX_CPU_REQUEST` | The number of CPUs requested by the job definition |
 | `OCX_DEPENDENCY_UUIDS` | Space-separated UUIDs for analyses staged as dependencies. |
 | `ONE_CODEX_BEARER_TOKEN` | Short-lived auth token for calling the OCX API from inside the run. **Opt-in, absent by default** — see [Calling the OCX API from inside a run](#calling-the-ocx-api-from-inside-a-run). |
 | `$ARGS_<KEY>` | One per entry in the Job's `arguments_schema`, value from the per-run `job_args`. |
