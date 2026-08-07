@@ -320,11 +320,14 @@ A Job can declare it depends on another Job. When you run the child, OCX runs th
 ocx.Jobs.create(
     name="child",
     ...,
+    script="...",
     dependencies=[{"job": parent_job, "output_dir": "parent_out"}],
 )
 ```
 
 At run time, the parent's output files appear under `/out/parent_out/…` in the child container.
+
+**Note**: some additional fields can only be viewed by calling `.details()` on the job: `script`, `image_uri`, `job_type`, `inject_bearer_token`, and `autorun_on_org_sample_upload`.
 
 #### Overriding for one run
 
@@ -455,6 +458,7 @@ Drop the sample into `./out/` first. Flip `OCX_IS_LONG_READ` to exercise both br
 
 - **`--job-type cannot be changed after job creation`.** Drop the `--job-type` flag from `jobs update` calls.
 - **`cpu, ram_gb, storage_gb must be set for shell script jobs`.** Required on `jobs create`.
+- The One Codex executor will replace `ENTRYPOINT`, so do not rely on it
 
 #### `nextflow`-specific
 
