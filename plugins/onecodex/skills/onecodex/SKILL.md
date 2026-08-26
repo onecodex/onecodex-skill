@@ -55,7 +55,7 @@ ocx.Samples.all() # prefer .all() over .where() for fetching all instances of a 
 ocx.Samples.where(project=project_or_id)
 ocx.Samples.where(tags=["trimmed"])                 # has tag (name | id | Tag obj)
 ocx.Samples.where(filename={"$icontains": "patient"})
-ocx.Samples.where("size": {"$gte": 1_000_000}})
+ocx.Samples.where(size={"$gte": 1_000_000})
 from datetime import datetime, timedelta, timezone
 since = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
 ocx.Samples.where(updated_at={"$gte": since})       # RFC3339 w/ tz offset required
@@ -63,14 +63,17 @@ ocx.Samples.where(updated_at={"$gte": since})       # RFC3339 w/ tz offset requi
 
 Operators: `$eq $ne` (scalar/ref/None → IS [NOT] NULL), `$lt $lte $gt $gte` (num/datetime), `$between [a,b]` (inclusive), `$in [..]` (scalars/refs), `$contains $icontains $startswith $istartswith $endswith $iendswith` (str), `$containsall $containsany` (list-ref fields only). Single-ref fields → `$eq/$ne/$in`; list-ref `[Model]` → `$containsall/$containsany`.
 
+Enum-backed fields (`Metadata.platform/library_type/sample_type`, `Samples.status/visibility`, `Assets.status`) take `$eq/$ne/$in` only, and only whole allowed values — a partial value like `"Oxford"` is a 400, not an empty result.
+
 Client-side (when no server operator exists):
 
 ```python
 [s for s in ocx.Samples.where(public=True, limit=100) if "bad" not in s.filename.lower()]
 [s for s in ocx.Samples.where() if not any(t.name == "trimmed" for t in s.tags)]
 
-# metadata search by API is not possible: filter locally after retrieving broader samples
-samples.filter(lambda s: s.metadata.get("sample_type") == "clinical")  # SampleCollection only
+# most metadata fields ARE server-filterable via Metadata.where; only `custom` is not
+ocx.Metadata.where(sample_type="Metagenomic")
+samples.filter(lambda s: s.metadata.custom.get("lab") == "X")  # `custom` only; SampleCollection
 ```
 
 Bulk = fast (server-side, paged, relations included). Per-id loops = slow.
@@ -78,11 +81,13 @@ Bulk = fast (server-side, paged, relations included). Per-id loops = slow.
 ### Fields
 
 - **Samples** (filterable): `created_at updated_at? filename? size? status visibility error_msg? metadata→Metadata owner→Users primary_classification→Classifications? project→Projects? tags→[Tags]`
+  - enum values: `status` = `awaiting_data|importing|validating|failed_validation|available|deleted` · `visibility` = `public|shared|private|importing|awaiting data`
   - IMPORTANT: `sample.primary_classification` is the PREFERRED WAY to get a Classification for a given sample
 - **Metadata** (own samples only): `sample→Samples starred updated_at? date_collected? date_sequenced? description? external_sample_id? library_type? location_lat? location_lon? location_string? name? platform? sample_type? custom(dict, NOT filterable)`
+  - enum values: `library_type` = `WGS|Targeted/16S|Other` · `sample_type` = `Isolate|Metagenomic|Other` · `platform` = `Illumina HiSeq|Illumina NovaSeq 6000|Oxford Nanopore MinION|PacBio Revio|...`
 - **Classifications/Alignments/FunctionalProfiles/Panels**: `created_at complete draft success? error_msg? job→Jobs sample→Samples dependencies→[Analyses] job_args/cost(NOT filterable)`. **Analyses** adds `analysis_type`.
 - **Projects**: `name? project_name? description? external_id? public owner→Users permissions(NOT filterable)`
-- **Tags** `name` · **Users** `email` · **Jobs** `created_at name analysis_type public` · **Documents** `created_at filename size? uploader→Users downloaders→[Users]`
+- **Tags** `name` · **Users** (none — `email` is NOT filterable) · **Jobs** `created_at name analysis_type public` · **Documents** `created_at filename size? uploader→Users downloaders→[Users]`
 
 ### Upload
 
