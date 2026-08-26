@@ -80,6 +80,8 @@ Bulk = fast (server-side, paged, relations included). Per-id loops = slow.
 
 ### Fields
 
+Introspect rather than trusting this list: `inspect.signature(ocx.Samples.where)` names every filterable field and the filter type it accepts (`StrFilter`, `EnumStrFilter`, `NumFilter`, `DatetimeFilter`, `BoolFilter`, `RefFilter`). The filter types themselves are TypedDicts in `onecodex.models.filters` listing their allowed operators.
+
 - **Samples** (filterable): `created_at updated_at? filename? size? status visibility error_msg? metadata→Metadata owner→Users primary_classification→Classifications? project→Projects? tags→[Tags]`
   - enum values: `status` = `awaiting_data|importing|validating|failed_validation|available|deleted` · `visibility` = `public|shared|private|importing|awaiting data`
   - IMPORTANT: `sample.primary_classification` is the PREFERRED WAY to get a Classification for a given sample
