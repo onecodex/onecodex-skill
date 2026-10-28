@@ -30,7 +30,7 @@ Update with `/plugin marketplace update onecodex`.
 Requires the GitHub Copilot CLI (`npm install -g @github/copilot`).
 
 ```bash
-copilot plugin install onecodex-collaborations/onecodex-skill:plugins/onecodex
+copilot plugin install onecodex/onecodex-skill:plugins/onecodex
 ```
 
 Installed globally for your user — available in Copilot CLI and VS Code Copilot Chat across all workspaces. Reload the Copilot Chat view in VS Code after install.
@@ -40,7 +40,7 @@ Installed globally for your user — available in Copilot CLI and VS Code Copilo
 Requires OpenAI Codex CLI ≥ 0.142 (the `plugin` subcommand isn't in older releases — upgrade with `npm install -g @openai/codex@latest`).
 
 ```bash
-codex plugin marketplace add onecodex-collaborations/onecodex-skill
+codex plugin marketplace add onecodex/onecodex-skill
 codex plugin add onecodex@onecodex
 ```
 
