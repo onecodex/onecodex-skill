@@ -19,7 +19,7 @@ Some of the tasks you can perform using this skill with an AI coding agent:
 ### Claude Code
 
 ```text
-/plugin marketplace add onecodex-collaborations/onecodex-skill
+/plugin marketplace add onecodex/onecodex-skill
 /plugin install onecodex@onecodex
 ```
 
