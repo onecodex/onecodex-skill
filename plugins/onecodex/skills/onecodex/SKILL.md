@@ -411,6 +411,7 @@ Many tools/pipelines support downloading their DB on first run. For prototyping,
 
 ### Best practices
 
+- **Confirm with the user before submitting more than 10 jobs.** `Jobs.run` / `onecodex jobs run` in a loop over a sample set is cheap to write and expensive to run: every run consumes compute. Before a batch of more than ten runs, state the count and the job and wait for an explicit go-ahead; prefer a small representative subset first. Cancel extras with `onecodex analyses cancel <id>`.
 - **Read `OCX_SAMPLE_FILENAME`, not `$1`.** The sample isn't passed positionally.
 - **Branch on `OCX_IS_LONG_READ`.** Don't infer from the filename; treat unknown samples as short-read (or fail loudly).
 - **Set `HOME=/tmp` + redirect caches** for tools that scribble in `$HOME/.cache` — the container's home directory may be read-only:
